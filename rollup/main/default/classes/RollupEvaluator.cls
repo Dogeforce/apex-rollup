@@ -9,7 +9,12 @@ public without sharing abstract class RollupEvaluator implements Rollup.Evaluato
     if (isChangedFieldEval && isWhereClauseEval) {
       return new CombinedEvaluator(rollupMetadata, oldCalcItems, sObjectType);
     } else if (isChangedFieldEval) {
-      return new SObjectChangedFieldEvaluator(rollupMetadata.ChangedFieldsOnCalcItem__c.split(','), oldCalcItems);
+        // Include rollupMetadata.LookupFieldOnCalcItem__c here? That would consider new parent as changed/to roll-up
+        // Still would need something extra for old lookup too though
+      List<String> changedFieldNames = rollupMetadata.ChangedFieldsOnCalcItem__c.split(',');
+      changedFieldNames.add(rollupMetadata.LookupFieldOnCalcItem__c);
+
+      return new SObjectChangedFieldEvaluator(changedFieldNames, oldCalcItems);
     } else if (isWhereClauseEval) {
       return new WhereFieldEvaluator(rollupMetadata.CalcItemWhereClause__c, sObjectType);
     }
@@ -20,7 +25,10 @@ public without sharing abstract class RollupEvaluator implements Rollup.Evaluato
     private final RollupEvaluator changedFiedEval;
     private final RollupEvaluator whereClauseEval;
     public CombinedEvaluator(Rollup__mdt rollupMetadata, Map<Id, SObject> oldCalcItems, SObjectType sObjectType) {
-      this.changedFiedEval = new SObjectChangedFieldEvaluator(rollupMetadata.ChangedFieldsOnCalcItem__c.split(','), oldCalcItems);
+      List<String> changedFieldNames = rollupMetadata.ChangedFieldsOnCalcItem__c.split(',');
+      changedFieldNames.add(rollupMetadata.LookupFieldOnCalcItem__c);
+
+      this.changedFiedEval = new SObjectChangedFieldEvaluator(changedFieldNames, oldCalcItems);
       this.whereClauseEval = new WhereFieldEvaluator(rollupMetadata.CalcItemWhereClause__c, sObjectType);
     }
 
